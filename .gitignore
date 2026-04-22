@@ -303,3 +303,8 @@ Thumbs.db
 **/*.local.ini
 **/*.local.cfg
 **/*.local.properties
+
+
+# agents
+skills-lock.json
+.agents/
