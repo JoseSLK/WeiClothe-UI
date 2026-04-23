@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { InventoryDashboard } from './inventory-dashboard';
+import { ItemCarousel } from './item-carousel.component';
 
-describe('InventoryDashboard', () => {
-  let component: InventoryDashboard;
-  let fixture: ComponentFixture<InventoryDashboard>;
+describe('ItemCarousel', () => {
+  let component: ItemCarousel;
+  let fixture: ComponentFixture<ItemCarousel>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [InventoryDashboard],
+      imports: [ItemCarousel],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(InventoryDashboard);
+    fixture = TestBed.createComponent(ItemCarousel);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
