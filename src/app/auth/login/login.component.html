@@ -1,1 +1,23 @@
-<p>login works!</p>
+<div class="login-container" style="max-width: 400px; margin: 50px auto; text-align: center;">
+    <h2>Iniciar Sesión en WeiClothe</h2>
+
+    <form (ngSubmit)="onSubmit()">
+
+        <div style="margin-bottom: 15px;">
+            <label for="email" style="display: block; margin-bottom: 5px;">Correo Electrónico</label>
+            <input type="email" id="email" name="email" [(ngModel)]="email" required style="width: 100%; padding: 8px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label for="password" style="display: block; margin-bottom: 5px;">Contraseña</label>
+            <input type="password" id="password" name="password" [(ngModel)]="password" required
+                style="width: 100%; padding: 8px;">
+        </div>
+
+        <button type="submit"
+            style="padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer;">
+            Ingresar
+        </button>
+
+    </form>
+</div>
