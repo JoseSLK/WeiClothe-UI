@@ -55,7 +55,7 @@
 
           <div class="input-group">
             <label for="date_birth">Fecha de Nacimiento</label>
-            <input type="date" id="date_birth" name="date_birth" [(ngModel)]="user.date_birth" required
+            <input type="date" id="date_birth" name="date_birth" [(ngModel)]="user.date_birth" required [max]="maxDate"
               [ngClass]="{'input-error': errorMessage}">
           </div>
         </div>
