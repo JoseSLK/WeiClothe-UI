@@ -1,37 +1,45 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule, RouterModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
 export class Login {
-  // Variables that will connect with the HTML
   email = '';
   password = '';
 
-  // Inject the service and the router
+  isLoading = false;
+  errorMessage = '';
+  showPassword = false;
+
   constructor(private authService: AuthService, private router: Router) { }
 
   onSubmit() {
+    this.errorMessage = '';
+
     if (this.email && this.password) {
-      // Call the function  in auth.ts
+      this.isLoading = true;
+
       this.authService.login(this.email, this.password).subscribe({
         next: (respuesta) => {
           console.log('EXITO', respuesta);
+          this.isLoading = false;
           this.router.navigate(['/clothes/dashboard']);
         },
         error: (error) => {
           console.error('Error al iniciar sesión', error);
-          alert('Correo o contraseña incorrectos');
+          this.isLoading = false;
+          this.errorMessage = 'Correo o contraseña incorrectos. Inténtalo de nuevo.';
         }
       });
     } else {
-      alert('Por favor, llena todos los campos');
+      this.errorMessage = 'Por favor, llena todos los campos.';
     }
   }
 }
