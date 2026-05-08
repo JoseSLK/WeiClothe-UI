@@ -23,6 +23,11 @@ export class AuthService {
       );
   }
 
+  // Register through Go backend
+  register(userData: any): Observable<any> {
+    return this.http.post<any>(`${this.goApiUrl}wei/users/register`, userData);
+  }
+
   getToken(): string | null {
     return localStorage.getItem('token');
   }
