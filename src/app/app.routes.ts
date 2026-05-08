@@ -1,23 +1,32 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './auth/guards/auth.guard';
 
 export const routes: Routes = [
     {
         path: '',
         loadChildren: () =>
-        import('./auth/auth.module') //Antes de cargar algo, angular ejecuta la funcion en busqueda de un paquete de codigo
-            .then(m => m.AuthModule) //Arranca especificamente la clase que viene dentro d ese archivo
+            import('./auth/auth.module')
+                .then(m => m.AuthModule)
     },
     {
         path: 'clothes',
+        canActivate: [authGuard],
+        canActivateChild: [authGuard],
         loadChildren: () =>
-        import('./clothes/clothes.module')
-        .then(m=>m.ClothesModule)
+            import('./clothes/clothes.module')
+                .then(m => m.ClothesModule)
 
     },
     {
         path: 'recomendation',
-        loadChildren: () => 
-        import('./recomendation/recomendation.module')
-        .then(m => m.RecomendationModule)
+        canActivate: [authGuard],
+        canActivateChild: [authGuard],
+        loadChildren: () =>
+            import('./recomendation/recomendation.module')
+                .then(m => m.RecomendationModule)
+    },
+    {
+        path: '**',
+        redirectTo: ''
     }
 ];
