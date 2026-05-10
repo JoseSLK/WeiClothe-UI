@@ -1,1 +1,27 @@
-<p>inventory-dashboard works!</p>
+<div class="test-container">
+  <h1>Panel de Prueba: Clothes API</h1>
+
+
+  <div class="test-buttons">
+    <button (click)="testPing()" [disabled]="isLoading">1. Ping (Healthcheck)</button>
+    <button (click)="testCreateClothing()" [disabled]="isLoading">2. Crear Prenda (POST)</button>
+    <button (click)="testGetMyClothes()" [disabled]="isLoading">3. Obtener Mis Prendas (GET)</button>
+
+    <div class="id-input-container">
+      <input type="text" [value]="lastCreatedId" (input)="updateId($event)" placeholder="ID..">
+    </div>
+
+    <button (click)="testGetClothingDetail()" [disabled]="isLoading || !lastCreatedId">4. Obtener Detalle por
+      ID (GET)</button>
+    <button (click)="testUpdateStatus()" [disabled]="isLoading || !lastCreatedId">5. Actualizar Estado por ID
+      (PATCH)</button>
+    <button (click)="testUpdateClassification()" [disabled]="isLoading || !lastCreatedId">6. Simular IA Clasificación
+      por ID (PATCH)</button>
+  </div>
+
+  <div class="response-panel">
+    <h3>Respuesta del Servidor (JSON Crudo):</h3>
+    <div class="spinner" *ngIf="isLoading">Cargando...</div>
+    <pre *ngIf="!isLoading">{{ apiResponse | json }}</pre>
+  </div>
+</div>
