@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
@@ -28,7 +28,11 @@ export class Register implements OnInit {
   showConfirmPassword = false;
   maxDate: string = '';
 
-  constructor(private authService: AuthService, private router: Router) { }
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit() {
     const today = new Date();
@@ -47,20 +51,24 @@ export class Register implements OnInit {
     if (!this.user.first_name || !this.user.last_name || !this.user.nickname ||
       !this.user.email || !this.user.password || !this.user.confirm_password || !this.user.date_birth || !this.user.gender) {
       this.errorMessage = 'Por favor, llena todos los campos.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.user.password !== this.user.confirm_password) {
       this.errorMessage = 'Las contraseñas no coinciden.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.user.date_birth > this.maxDate) {
       this.errorMessage = 'Debes tener al menos 10 años de edad para registrarte.';
+      this.cdr.detectChanges();
       return;
     }
 
     this.isLoading = true;
+    this.cdr.detectChanges();
 
     const payload = {
       first_name: this.user.first_name,
@@ -76,12 +84,28 @@ export class Register implements OnInit {
       next: (response) => {
         console.log('Registro exitoso', response);
         this.isLoading = false;
+        this.cdr.detectChanges();
         this.router.navigate(['/']);
       },
       error: (error) => {
         console.error('Error al registrar', error);
         this.isLoading = false;
-        this.errorMessage = 'Hubo un error al registrarte. Verifica tus datos o intenta con otro correo.';
+        
+        if (error.status === 400 && error.error?.error) {
+          // Extraer error de validación de Go (ej: password muy corto)
+          const goError = error.error.error;
+          if (goError.includes('Password') && goError.includes('min')) {
+             this.errorMessage = 'La contraseña es muy corta. Revisa los requisitos.';
+          } else {
+             this.errorMessage = `Error de validación: ${goError}`;
+          }
+        } else if (error.status === 409) {
+          this.errorMessage = 'El correo o nickname ya están en uso.';
+        } else {
+          this.errorMessage = 'Hubo un error al registrarte. Verifica tus datos o intenta más tarde.';
+        }
+        
+        this.cdr.detectChanges();
       }
     });
   }
