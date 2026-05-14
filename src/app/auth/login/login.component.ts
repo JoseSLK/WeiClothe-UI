@@ -42,10 +42,12 @@ export class Login {
           console.error('Error al iniciar sesión', error);
           this.isLoading = false;
           
-          if (error.status === 500) {
-            this.errorMessage = 'El servidor rechazó las credenciales o no hay usuarios registrados.';
-          } else if (error.status === 401) {
+          if (error.name === 'TimeoutError') {
+            this.errorMessage = 'Tiempo de espera agotado. Verifica tu conexión.';
+          } else if (error.status === 401 || error.status === 403) {
             this.errorMessage = 'Correo o contraseña incorrectos.';
+          } else if (error.status === 500) {
+            this.errorMessage = 'Error interno del servidor.';
           } else {
              this.errorMessage = 'Hubo un error de conexión con el servidor.';
           }
