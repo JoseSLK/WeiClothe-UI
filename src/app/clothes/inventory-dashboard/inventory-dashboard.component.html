@@ -1,27 +1,81 @@
-<div class="test-container">
-  <h1>Panel de Prueba: Clothes API</h1>
+<div
+  class="dashboard-wrapper"
+  [class.layout--carousel-active]="showCarousel"
+  [class.layout--carousel-off]="hasCarouselClothes && !carouselEnabled"
+  [class.layout--no-clothes]="!hasCarouselClothes"
+>
+  <!-- Toggle: visible when user has clothes (on or off) -->
+  <button
+    *ngIf="hasCarouselClothes"
+    type="button"
+    class="carousel-toggle"
+    [class.carousel-toggle--on]="carouselEnabled"
+    (click)="toggleCarousel()"
+    [attr.aria-pressed]="carouselEnabled"
+    [attr.aria-label]="carouselEnabled ? 'Desactivar carrusel de prendas' : 'Activar carrusel de prendas'"
+    title="{{ carouselEnabled ? 'Desactivar carrusel' : 'Activar carrusel' }}"
+  >
+    <span class="carousel-toggle__track" aria-hidden="true">
+      <span class="carousel-toggle__thumb"></span>
+    </span>
+    <span class="carousel-toggle__label">{{ carouselEnabled ? 'Carrusel on' : 'Carrusel off' }}</span>
+  </button>
 
-
-  <div class="test-buttons">
-    <button (click)="testPing()" [disabled]="isLoading">1. Ping (Healthcheck)</button>
-    <button (click)="testCreateClothing()" [disabled]="isLoading">2. Crear Prenda (POST)</button>
-    <button (click)="testGetMyClothes()" [disabled]="isLoading">3. Obtener Mis Prendas (GET)</button>
-
-    <div class="id-input-container">
-      <input type="text" [value]="lastCreatedId" (input)="updateId($event)" placeholder="ID..">
+  <!-- L-Carousel -->
+  <div class="carousel-l-container" *ngIf="showCarousel && carouselTrackItems.length">
+    <div class="carousel-top carousel-mask">
+      <div
+        class="carousel-track horizontal"
+        [style.--anim-duration]="carouselHorizontalDurationSec + 's'"
+        [style.--item-count]="carouselSlotsPerHalf"
+      >
+        <div
+          class="clothe-item"
+          *ngFor="let item of carouselTrackItems; trackBy: trackByCarouselIndexHorizontal"
+        >
+          <img [src]="item.image_url || 'https://via.placeholder.com/150'" alt="Prenda">
+        </div>
+      </div>
     </div>
 
-    <button (click)="testGetClothingDetail()" [disabled]="isLoading || !lastCreatedId">4. Obtener Detalle por
-      ID (GET)</button>
-    <button (click)="testUpdateStatus()" [disabled]="isLoading || !lastCreatedId">5. Actualizar Estado por ID
-      (PATCH)</button>
-    <button (click)="testUpdateClassification()" [disabled]="isLoading || !lastCreatedId">6. Simular IA Clasificación
-      por ID (PATCH)</button>
+    <div class="carousel-left carousel-mask carousel-mask--vertical">
+      <div
+        class="carousel-track vertical"
+        [style.--anim-duration]="carouselVerticalDurationSec + 's'"
+        [style.--item-count]="carouselSlotsPerHalf"
+      >
+        <div
+          class="clothe-item"
+          *ngFor="let item of carouselTrackItems; trackBy: trackByCarouselIndexVertical"
+        >
+          <img [src]="item.image_url || 'https://via.placeholder.com/150'" alt="Prenda">
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="response-panel">
-    <h3>Respuesta del Servidor (JSON Crudo):</h3>
-    <div class="spinner" *ngIf="isLoading">Cargando...</div>
-    <pre *ngIf="!isLoading">{{ apiResponse | json }}</pre>
+  <!-- Main Content -->
+  <div class="main-content test-container">
+    <h1>Panel de Prueba: Clothes API</h1>
+
+    <div class="test-buttons">
+      <button (click)="testPing()" [disabled]="isLoading">1. Ping (Healthcheck)</button>
+      <button (click)="testCreateClothing()" [disabled]="isLoading">2. Crear Prenda (POST)</button>
+      <button (click)="testGetMyClothes()" [disabled]="isLoading">3. Obtener Mis Prendas (GET)</button>
+
+      <div class="id-input-container">
+        <input type="text" [value]="lastCreatedId" (input)="updateId($event)" placeholder="ID..">
+      </div>
+
+      <button (click)="testGetClothingDetail()" [disabled]="isLoading || !lastCreatedId">4. Obtener Detalle por ID (GET)</button>
+      <button (click)="testUpdateStatus()" [disabled]="isLoading || !lastCreatedId">5. Actualizar Estado por ID (PATCH)</button>
+      <button (click)="testUpdateClassification()" [disabled]="isLoading || !lastCreatedId">6. Simular IA Clasificación por ID (PATCH)</button>
+    </div>
+
+    <div class="response-panel">
+      <h3>Respuesta del Servidor (JSON Crudo):</h3>
+      <div class="spinner" *ngIf="isLoading">Cargando...</div>
+      <pre *ngIf="!isLoading">{{ apiResponse | json }}</pre>
+    </div>
   </div>
 </div>

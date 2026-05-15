@@ -1,12 +1,319 @@
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: #000;
+  color: white;
+
+  --carousel-size: clamp(100px, 12vw, 160px);
+  --card-size: calc(var(--carousel-size) - clamp(0.5rem, 1.6vw, 1rem));
+  --thumb-size: clamp(40px, 5vw, 56px);
+  --carousel-gap: clamp(0.5rem, 1.2vw, 1rem);
+  --carousel-accent: #34d399;
+  --carousel-surface: rgba(24, 24, 27, 0.72);
+}
+
+.dashboard-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* --- L-carousel shell --- */
+.carousel-l-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.carousel-l-container > * {
+  pointer-events: auto;
+}
+
+.carousel-top {
+  position: absolute;
+  top: 0;
+  left: var(--carousel-size);
+  right: 0;
+  height: var(--carousel-size);
+  overflow: hidden;
+  background-color: rgba(9, 9, 11, 0.92);
+  border-bottom: 1px solid rgba(39, 39, 42, 0.9);
+  backdrop-filter: blur(10px);
+  transition: opacity 0.35s ease, height 0.35s ease, left 0.35s ease;
+}
+
+.carousel-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--carousel-size);
+  overflow: hidden;
+  background-color: rgba(9, 9, 11, 0.92);
+  border-right: 1px solid rgba(39, 39, 42, 0.9);
+  backdrop-filter: blur(10px);
+  transition: opacity 0.35s ease, width 0.35s ease;
+}
+
+/* Edge fade (horizontal strip) */
+.carousel-mask {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
+}
+
+.carousel-mask--vertical {
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+}
+
+.carousel-track {
+  display: flex;
+  gap: clamp(0.25rem, 0.6vw, 0.5rem);
+  padding: clamp(0.25rem, 0.8vw, 0.5rem);
+  will-change: transform;
+}
+
+/* Right → left: track moves from -50% toward 0 (content flows left, enters from right) */
+.horizontal {
+  flex-direction: row;
+  width: max-content;
+  animation-name: scroll-h;
+  animation-duration: max(
+    var(--anim-duration, 30s),
+    calc(72s / max(1, var(--item-count, 1)))
+  );
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Top → down: track moves from -50% toward 0 */
+.vertical {
+  flex-direction: column;
+  height: max-content;
+  animation-name: scroll-v;
+  animation-duration: max(
+    var(--anim-duration, 30s),
+    calc(80s / max(1, var(--item-count, 1)))
+  );
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.carousel-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-h {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scroll-v {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.clothe-item {
+  width: var(--card-size);
+  height: var(--card-size);
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.clothe-item:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.clothe-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+
+/* --- Toggle (pill) — overrides generic `button` below --- */
+button.carousel-toggle {
+  position: absolute;
+  z-index: 40;
+  top: clamp(6px, 1.2vw, 12px);
+  left: clamp(6px, 1.2vw, 12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.55rem 0.35rem 0.4rem;
+  margin: 0;
+  min-height: auto;
+  font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #e4e4e7;
+  background: rgba(15, 15, 17, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+button.carousel-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(24, 24, 27, 0.95);
+  transform: translateY(-1px);
+}
+
+.carousel-toggle__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #27272a;
+  flex-shrink: 0;
+  transition: background 0.25s ease;
+}
+
+.carousel-toggle--on .carousel-toggle__track {
+  background: rgba(52, 211, 153, 0.35);
+}
+
+.carousel-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fafafa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s ease, background 0.2s ease;
+}
+
+.carousel-toggle--on .carousel-toggle__thumb {
+  transform: translateX(16px);
+  background: var(--carousel-accent);
+}
+
+.carousel-toggle__label {
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* --- Main content layout --- */
+.main-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: clamp(1rem, 3vw, 2rem);
+  overflow-y: auto;
+  transition: top 0.35s ease, left 0.35s ease, padding 0.35s ease;
+}
+
+.layout--carousel-active .main-content {
+  top: var(--carousel-size);
+  left: var(--carousel-size);
+}
+
+/* --- Tablet / phone --- */
+@media (max-width: 768px) {
+  :host {
+    --carousel-size: clamp(88px, 18vw, 130px);
+    --card-size: clamp(64px, 16vw, 96px);
+    --thumb-size: clamp(36px, 10vw, 48px);
+  }
+
+  .carousel-left {
+    display: none;
+  }
+
+  .carousel-top {
+    left: 0;
+  }
+
+  .layout--carousel-active .main-content {
+    left: 0;
+    top: var(--carousel-size);
+  }
+
+  button.carousel-toggle {
+    top: clamp(8px, 2vw, 12px);
+    right: clamp(8px, 2vw, 12px);
+    left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  :host {
+    --carousel-size: clamp(72px, 22vw, 104px);
+    --card-size: clamp(56px, 20vw, 84px);
+    --thumb-size: clamp(32px, 12vw, 44px);
+  }
+
+  .carousel-track {
+    padding: 0.4rem clamp(0.35rem, 2vw, 0.65rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track {
+    animation: none !important;
+    transform: none;
+  }
+
+  button.carousel-toggle .carousel-toggle__thumb {
+    transition: none;
+  }
+}
+
+/* Original styles below */
 .test-container {
-  padding: 2rem;
   max-width: 800px;
   margin: 0 auto;
   color: var(--text-main, #ffffff);
 }
 
 .test-container h1 {
-  font-size: 1.8rem;
+  font-size: clamp(1.25rem, 4vw, 1.8rem);
   margin-bottom: 0.5rem;
 }
 
@@ -34,10 +341,10 @@
   border: 1px solid var(--border-color, #27272a);
   border-radius: 8px;
   color: white;
-  width: 200px;
+  width: min(200px, 100%);
 }
 
-button {
+button:not(.carousel-toggle) {
   padding: 0.8rem 1.2rem;
   background-color: var(--surface-color, #18181b);
   color: white;
@@ -48,12 +355,12 @@ button {
   font-weight: 500;
 }
 
-button:hover:not([disabled]) {
+button:not(.carousel-toggle):hover:not([disabled]) {
   background-color: #27272a;
   border-color: #52525b;
 }
 
-button[disabled] {
+button:not(.carousel-toggle)[disabled] {
   opacity: 0.4;
   cursor: not-allowed;
 }
