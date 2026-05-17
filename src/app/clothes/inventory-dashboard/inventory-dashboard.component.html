@@ -1,81 +1,192 @@
-<div
-  class="dashboard-wrapper"
-  [class.layout--carousel-active]="showCarousel"
-  [class.layout--carousel-off]="hasCarouselClothes && !carouselEnabled"
-  [class.layout--no-clothes]="!hasCarouselClothes"
->
-  <!-- Toggle: visible when user has clothes (on or off) -->
-  <button
-    *ngIf="hasCarouselClothes"
-    type="button"
-    class="carousel-toggle"
-    [class.carousel-toggle--on]="carouselEnabled"
-    (click)="toggleCarousel()"
-    [attr.aria-pressed]="carouselEnabled"
-    [attr.aria-label]="carouselEnabled ? 'Desactivar carrusel de prendas' : 'Activar carrusel de prendas'"
-    title="{{ carouselEnabled ? 'Desactivar carrusel' : 'Activar carrusel' }}"
-  >
-    <span class="carousel-toggle__track" aria-hidden="true">
-      <span class="carousel-toggle__thumb"></span>
-    </span>
-    <span class="carousel-toggle__label">{{ carouselEnabled ? 'Carrusel on' : 'Carrusel off' }}</span>
-  </button>
-
-  <!-- L-Carousel -->
-  <div class="carousel-l-container" *ngIf="showCarousel && carouselTrackItems.length">
-    <div class="carousel-top carousel-mask">
-      <div
-        class="carousel-track horizontal"
-        [style.--anim-duration]="carouselHorizontalDurationSec + 's'"
-        [style.--item-count]="carouselSlotsPerHalf"
+<div class="dashboard">
+  <header class="dash-header" role="banner">
+    <div class="dash-header__brand">WeiClothe</div>
+    <nav class="dash-header__nav" role="navigation" aria-label="Secciones">
+      <button
+        *ngFor="let item of navItems"
+        type="button"
+        class="dash-nav-tab"
+        [class.dash-nav-tab--active]="activeSection === item.id"
+        (click)="scrollToSection(item.id)"
       >
-        <div
-          class="clothe-item"
-          *ngFor="let item of carouselTrackItems; trackBy: trackByCarouselIndexHorizontal"
-        >
-          <img [src]="item.image_url || 'https://via.placeholder.com/150'" alt="Prenda">
+        {{ item.label }}
+      </button>
+    </nav>
+    <div class="dash-header__avatar" [attr.aria-label]="'Usuario: ' + userGreeting" title="{{ userGreeting }}">
+      {{ userInitials }}
+    </div>
+  </header>
+
+  <main #scrollArea class="dash-scroll" (scroll)="onDashboardScroll()">
+    <!-- Inicio -->
+    <section id="section-inicio" class="dash-section dash-section--hero">
+      <h1 class="dash-hero__title">Hola, {{ userGreeting }}</h1>
+      <p class="dash-hero__subtitle">Gestiona tu armario desde un solo lugar.</p>
+      <div class="dash-hero__stats" role="group" aria-label="Resumen">
+        <div class="dash-stat">
+          <span class="dash-stat__value">{{ clothesList.length }}</span>
+          <span class="dash-stat__label">Prendas</span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="carousel-left carousel-mask carousel-mask--vertical">
-      <div
-        class="carousel-track vertical"
-        [style.--anim-duration]="carouselVerticalDurationSec + 's'"
-        [style.--item-count]="carouselSlotsPerHalf"
-      >
-        <div
-          class="clothe-item"
-          *ngFor="let item of carouselTrackItems; trackBy: trackByCarouselIndexVertical"
-        >
-          <img [src]="item.image_url || 'https://via.placeholder.com/150'" alt="Prenda">
+    <div class="dash-divider" role="separator" aria-hidden="true"></div>
+
+    <!-- Armario -->
+    <section id="section-armario" class="dash-section">
+      <div class="dash-section__head">
+        <h2 class="dash-section__title">Mi armario</h2>
+        <p class="dash-section__desc">Busca, recarga o añade prendas.</p>
+      </div>
+
+      <div class="armario-toolbar">
+        <div class="armario-toolbar__search">
+          <label class="field-label" for="armario-search">Buscar</label>
+          <div class="armario-search-row">
+            <input
+              id="armario-search"
+              type="search"
+              name="armarioSearch"
+              [(ngModel)]="armarioSearchQuery"
+              class="dash-input"
+              placeholder="Nombre o color…"
+              autocomplete="off"
+            />
+            <button
+              type="button"
+              class="dash-icon-btn"
+              [class.dash-icon-btn--spinning]="armarioReloading"
+              [disabled]="armarioReloading"
+              (click)="reloadClothes()"
+              aria-label="Recargar prendas"
+              title="Recargar prendas"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main-content test-container">
-    <h1>Panel de Prueba: Clothes API</h1>
-
-    <div class="test-buttons">
-      <button (click)="testPing()" [disabled]="isLoading">1. Ping (Healthcheck)</button>
-      <button (click)="testCreateClothing()" [disabled]="isLoading">2. Crear Prenda (POST)</button>
-      <button (click)="testGetMyClothes()" [disabled]="isLoading">3. Obtener Mis Prendas (GET)</button>
-
-      <div class="id-input-container">
-        <input type="text" [value]="lastCreatedId" (input)="updateId($event)" placeholder="ID..">
+        <button
+          type="button"
+          class="dash-btn dash-btn--primary"
+          (click)="toggleArmarioAddForm()"
+          [attr.aria-expanded]="armarioAddFormOpen"
+        >
+          {{ armarioAddFormOpen ? 'Cerrar formulario' : 'Agregar prenda' }}
+        </button>
       </div>
 
-      <button (click)="testGetClothingDetail()" [disabled]="isLoading || !lastCreatedId">4. Obtener Detalle por ID (GET)</button>
-      <button (click)="testUpdateStatus()" [disabled]="isLoading || !lastCreatedId">5. Actualizar Estado por ID (PATCH)</button>
-      <button (click)="testUpdateClassification()" [disabled]="isLoading || !lastCreatedId">6. Simular IA Clasificación por ID (PATCH)</button>
-    </div>
+      <div *ngIf="armarioAddFormOpen" class="armario-form-panel" aria-live="polite">
+        <p class="armario-form__hint">Imagen, tipo y nombre (requeridos).</p>
 
-    <div class="response-panel">
-      <h3>Respuesta del Servidor (JSON Crudo):</h3>
-      <div class="spinner" *ngIf="isLoading">Cargando...</div>
-      <pre *ngIf="!isLoading">{{ apiResponse | json }}</pre>
-    </div>
-  </div>
+        <div class="armario-field">
+          <label class="field-label" [attr.for]="'armario-file-' + armarioFileInputKey">Imagen</label>
+          <input
+            [id]="'armario-file-' + armarioFileInputKey"
+            type="file"
+            accept="image/*"
+            class="armario-file-input"
+            (change)="onArmarioImageChange($event)"
+          />
+          <p *ngIf="armarioImageError" class="field-error">{{ armarioImageError }}</p>
+        </div>
+
+        <div *ngIf="showArmarioGarmentTypeField" class="armario-field armario-field-enter">
+          <label class="field-label" for="armario-garment-type">Tipo de prenda</label>
+          <input
+            id="armario-garment-type"
+            type="text"
+            name="armarioGarmentType"
+            [(ngModel)]="armarioGarmentType"
+            class="dash-input"
+            placeholder="ej. T-Shirt"
+            autocomplete="off"
+          />
+        </div>
+
+        <div *ngIf="showArmarioNameField" class="armario-field armario-field-enter">
+          <label class="field-label" for="armario-garment-name">Nombre</label>
+          <input
+            id="armario-garment-name"
+            type="text"
+            name="armarioGarmentName"
+            [(ngModel)]="armarioGarmentName"
+            class="dash-input"
+            placeholder="Nombre de la prenda"
+            autocomplete="off"
+          />
+        </div>
+
+        <div *ngIf="showArmarioSubmit" class="armario-field armario-field-enter armario-field--submit">
+          <button
+            type="button"
+            class="dash-btn dash-btn--primary dash-btn--block"
+            [disabled]="!canSubmitArmarioGarment || armarioUploading"
+            (click)="submitArmarioGarment()"
+          >
+            {{ armarioUploading ? 'Subiendo…' : 'Subir prenda' }}
+          </button>
+        </div>
+
+        <p *ngIf="armarioUploadError" class="field-error field-error--block">{{ armarioUploadError }}</p>
+      </div>
+
+      <div class="armario-gallery" role="list">
+        <figure
+          *ngFor="let item of filteredArmarioClothes; trackBy: trackByClothingId"
+          class="armario-gallery__item"
+          role="listitem"
+        >
+          <img
+            [src]="item.image_url || 'https://via.placeholder.com/150'"
+            [alt]="item.name || item.garment_type || 'Prenda'"
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
+      </div>
+      <p *ngIf="!clothesList.length" class="armario-empty">Sin prendas aún.</p>
+      <p *ngIf="clothesList.length && !filteredArmarioClothes.length" class="armario-empty">Sin coincidencias.</p>
+    </section>
+
+    <div class="dash-divider" role="separator" aria-hidden="true"></div>
+
+    <!-- Recomendaciones (placeholder) -->
+    <section id="section-recomendaciones" class="dash-section">
+      <div class="dash-section__head">
+        <h2 class="dash-section__title">Recomendaciones</h2>
+        <p class="dash-section__desc">Sugerencias basadas en tu armario.</p>
+      </div>
+      <div class="dash-placeholder" role="status">
+        <svg class="dash-placeholder__icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+        <p class="dash-placeholder__text">Próximamente</p>
+        <p class="dash-placeholder__sub">Aquí verás recomendaciones cuando esté listo el motor.</p>
+      </div>
+    </section>
+
+    <div class="dash-divider" role="separator" aria-hidden="true"></div>
+
+    <!-- Mis datos (placeholder) -->
+    <section id="section-datos" class="dash-section dash-section--last">
+      <div class="dash-section__head">
+        <h2 class="dash-section__title">Mis datos</h2>
+        <p class="dash-section__desc">Perfil y preferencias.</p>
+      </div>
+      <div class="dash-placeholder" role="status">
+        <svg class="dash-placeholder__icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <p class="dash-placeholder__text">Próximamente</p>
+        <p class="dash-placeholder__sub">Editar perfil y ajustes llegará en una siguiente iteración.</p>
+      </div>
+    </section>
+  </main>
 </div>
