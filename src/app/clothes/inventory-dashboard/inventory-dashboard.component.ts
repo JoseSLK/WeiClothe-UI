@@ -1,139 +1,235 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import {
+  Component,
+  ChangeDetectorRef,
+  OnInit,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ClothesService } from '../services/clothes.service';
 import { CreateClothingDTO, ClothingItem } from '../interfaces/clothes.interface';
-
-const CAROUSEL_STORAGE_KEY = 'wei-inventory-carousel-enabled';
 
 @Component({
   selector: 'app-inventory-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './inventory-dashboard.component.html',
   styleUrl: './inventory-dashboard.component.css',
 })
-export class InventoryDashboard implements OnInit {
+export class InventoryDashboard implements OnInit, AfterViewInit {
+  @ViewChild('scrollArea', { static: false }) scrollArea?: ElementRef<HTMLElement>;
+
   apiResponse: any = null;
   isLoading: boolean = false;
   lastCreatedId: string = '';
   clothesList: ClothingItem[] = [];
 
-  /** User preference: show animated L-carousel when clothes exist */
-  carouselEnabled = true;
+  /** Section id matching `section-${id}` in template; synced on scroll / tab click */
+  activeSection = 'inicio';
 
-  /** Flat list: two identical halves concatenated for seamless CSS loop */
-  carouselTrackItems: ClothingItem[] = [];
+  navItems = [
+    { id: 'inicio', label: 'Inicio' },
+    { id: 'armario', label: 'Armario' },
+    { id: 'recomendaciones', label: 'Recomendaciones' },
+    { id: 'datos', label: 'Mis datos' },
+  ];
 
-  /** Slots in one half of the track (for CSS --item-count) */
-  carouselSlotsPerHalf = 0;
+  userGreeting = 'Usuario';
+  userInitials = 'U';
 
-  /** Seconds — horizontal strip (right → left) */
-  carouselHorizontalDurationSec = 30;
+  /** Armario — search (name / color) */
+  armarioSearchQuery = '';
 
-  /** Seconds — vertical strip (top → down) */
-  carouselVerticalDurationSec = 30;
+  /** Armario — inline add form */
+  armarioAddFormOpen = false;
+  armarioUploading = false;
+  armarioGarmentType = '';
+  armarioGarmentName = '';
+  armarioSelectedImage: File | null = null;
+  armarioImageError = '';
+  armarioUploadError = '';
+  armarioFileInputKey = 0;
+  armarioReloading = false;
+
+  /** Aligns with scroll-margin-top (~header + padding) */
+  private headerOffsetPx = 68;
+  private scrollSpyRaf = 0;
 
   constructor(
     private clothesService: ClothesService,
     private cdr: ChangeDetectorRef
-  ) { }
+  ) {}
 
-  ngOnInit() {
-    const stored = localStorage.getItem(CAROUSEL_STORAGE_KEY);
-    if (stored !== null) {
-      this.carouselEnabled = stored === 'true';
-    }
+  ngOnInit(): void {
+    this.readUserFromToken();
     this.loadClothes();
   }
 
-  get hasCarouselClothes(): boolean {
-    return (this.clothesList?.length ?? 0) > 0;
+  ngAfterViewInit(): void {
+    requestAnimationFrame(() => this.updateActiveSectionFromScroll());
   }
 
-  get showCarousel(): boolean {
-    return this.carouselEnabled && this.hasCarouselClothes;
+  get filteredArmarioClothes(): ClothingItem[] {
+    const q = this.armarioSearchQuery.trim().toLowerCase();
+    if (!q) return this.clothesList;
+    return this.clothesList.filter((item) => {
+      const name = (item.name ?? '').toLowerCase();
+      const color = (item.color ?? '').toLowerCase();
+      return name.includes(q) || color.includes(q);
+    });
   }
 
-  toggleCarousel(): void {
-    this.carouselEnabled = !this.carouselEnabled;
-    localStorage.setItem(CAROUSEL_STORAGE_KEY, String(this.carouselEnabled));
+  get canSubmitArmarioGarment(): boolean {
+    return (
+      !!this.armarioSelectedImage &&
+      this.armarioGarmentType.trim().length > 0 &&
+      this.armarioGarmentName.trim().length > 0
+    );
+  }
+
+  get showArmarioGarmentTypeField(): boolean {
+    return !!this.armarioSelectedImage;
+  }
+
+  get showArmarioNameField(): boolean {
+    return this.armarioGarmentType.trim().length > 0;
+  }
+
+  get showArmarioSubmit(): boolean {
+    return this.canSubmitArmarioGarment;
+  }
+
+  trackByClothingId(_index: number, item: ClothingItem): string {
+    return item.id;
+  }
+
+  scrollToSection(id: string): void {
+    const el = document.getElementById(`section-${id}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.activeSection = id;
     this.cdr.detectChanges();
   }
 
-  trackByCarouselIndexHorizontal(index: number): string {
-    return `h-${index}`;
+  onDashboardScroll(): void {
+    if (this.scrollSpyRaf) cancelAnimationFrame(this.scrollSpyRaf);
+    this.scrollSpyRaf = requestAnimationFrame(() => {
+      this.scrollSpyRaf = 0;
+      this.updateActiveSectionFromScroll();
+    });
   }
 
-  trackByCarouselIndexVertical(index: number): string {
-    return `v-${index}`;
+  toggleArmarioAddForm(): void {
+    this.armarioAddFormOpen = !this.armarioAddFormOpen;
+    this.cdr.detectChanges();
   }
 
-  /**
-   * Repetitions of the full clothes list per half-track.
-   * Few unique items → more repeats so loop never looks empty.
-   */
-  private repetitionsPerHalf(n: number): number {
-    if (n <= 0) return 0;
-    if (n <= 2) return 8;
-    if (n <= 10) return 4;
-    return 2;
-  }
-
-  private rebuildCarouselTrack(): void {
-    const list = this.clothesList;
-    if (!list.length) {
-      this.carouselTrackItems = [];
-      this.carouselSlotsPerHalf = 0;
+  onArmarioImageChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.armarioImageError = '';
+    this.armarioUploadError = '';
+    if (!file) {
+      this.armarioSelectedImage = null;
+      this.cdr.detectChanges();
       return;
     }
-
-    const reps = this.repetitionsPerHalf(list.length);
-    const half: ClothingItem[] = [];
-    for (let r = 0; r < reps; r++) {
-      half.push(...list);
+    if (!file.type.startsWith('image/')) {
+      this.armarioImageError = 'Archivo no es imagen.';
+      this.armarioSelectedImage = null;
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
     }
-    this.carouselSlotsPerHalf = half.length;
-    this.carouselTrackItems = [...half, ...half];
-
-    const slots = this.carouselSlotsPerHalf;
-    // Fewer effective items → slower animation so it does not blur past
-    if (slots <= 6) {
-      this.carouselHorizontalDurationSec = 48;
-      this.carouselVerticalDurationSec = 52;
-    } else if (slots <= 20) {
-      this.carouselHorizontalDurationSec = 32;
-      this.carouselVerticalDurationSec = 36;
-    } else {
-      this.carouselHorizontalDurationSec = 22;
-      this.carouselVerticalDurationSec = 26;
-    }
+    this.armarioSelectedImage = file;
+    this.cdr.detectChanges();
   }
 
-  loadClothes() {
+  submitArmarioGarment(): void {
+    if (!this.canSubmitArmarioGarment || this.armarioUploading) return;
+
+    const formData = new FormData();
+    formData.append('image', this.armarioSelectedImage!);
+    formData.append('garment_type', this.armarioGarmentType.trim());
+    formData.append('name', this.armarioGarmentName.trim());
+
+    this.armarioUploading = true;
+    this.armarioUploadError = '';
+    this.cdr.detectChanges();
+
+    this.clothesService.uploadClothing(formData).subscribe({
+      next: () => {
+        this.armarioUploading = false;
+        this.clothesService.invalidateClothesCache();
+        this.armarioGarmentType = '';
+        this.armarioGarmentName = '';
+        this.armarioSelectedImage = null;
+        this.armarioFileInputKey++;
+        this.armarioImageError = '';
+        this.loadClothes();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Armario upload error', err);
+        this.armarioUploading = false;
+        this.armarioUploadError =
+          err?.error?.message ?? err?.message ?? 'Error al subir la prenda.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  loadClothes(): void {
     const userId = this.clothesService.getUserIdFromToken();
     if (userId) {
-      this.clothesService.getUserClothes(userId).subscribe({
+      this.clothesService.getCachedClothes(userId).subscribe({
         next: (clothes) => {
           this.clothesList = clothes;
-          this.rebuildCarouselTrack();
           this.cdr.detectChanges();
         },
-        error: (err) => console.error('Error loading clothes', err)
+        error: (err) => console.error('Error loading clothes', err),
       });
     }
   }
 
-  updateId(event: any) {
+  reloadClothes(): void {
+    if (this.armarioReloading) return;
+    this.armarioReloading = true;
+    this.cdr.detectChanges();
+
+    this.clothesService.invalidateClothesCache();
+    const userId = this.clothesService.getUserIdFromToken();
+    if (!userId) {
+      this.armarioReloading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.clothesService.getCachedClothes(userId).subscribe({
+      next: (clothes) => {
+        this.clothesList = clothes;
+        this.armarioReloading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error reloading clothes', err);
+        this.armarioReloading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  updateId(event: any): void {
     this.lastCreatedId = event.target.value;
     this.cdr.detectChanges();
   }
 
-  testPing() {
+  testPing(): void {
     this.executeRequest(this.clothesService.ping());
   }
 
-  testCreateClothing() {
-    // Generate a unique URL each time to bypass PostgreSQL "UNIQUE" constraint
+  testCreateClothing(): void {
     const uniqueUrl = `https://example.com/test-shirt-${Date.now()}.jpg`;
 
     const dto: CreateClothingDTO = {
@@ -141,7 +237,7 @@ export class InventoryDashboard implements OnInit {
       garment_type: 'T-Shirt',
       name: 'Camiseta de Prueba',
       source: 'manual',
-      status: 'queued'
+      status: 'queued',
     };
 
     this.isLoading = true;
@@ -165,49 +261,59 @@ export class InventoryDashboard implements OnInit {
           status: err.status,
           statusText: err.statusText,
           message: err.message,
-          error_body: err.error
+          error_body: err.error,
         };
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
-  testGetMyClothes() {
+  testGetMyClothes(): void {
     const userId = this.clothesService.getUserIdFromToken();
     if (!userId) {
-      this.apiResponse = { error: 'Error: No se pudo extraer el ID de usuario del JWT.' };
+      this.apiResponse = {
+        error: 'Error: No se pudo extraer el ID de usuario del JWT.',
+      };
       this.cdr.detectChanges();
       return;
     }
     this.executeRequest(this.clothesService.getUserClothes(userId));
   }
 
-  testGetClothingDetail() {
+  testGetClothingDetail(): void {
     if (!this.lastCreatedId) {
-      this.apiResponse = { error: 'Primero debes "Crear Prenda" para obtener un ID válido para consultar.' };
+      this.apiResponse = {
+        error:
+          'Primero debes "Crear Prenda" para obtener un ID válido para consultar.',
+      };
       this.cdr.detectChanges();
       return;
     }
     this.executeRequest(this.clothesService.getClothingById(this.lastCreatedId));
   }
 
-  testUpdateStatus() {
+  testUpdateStatus(): void {
     if (!this.lastCreatedId) {
-      this.apiResponse = { error: 'Primero debes "Crear Prenda" para obtener un ID válido.' };
+      this.apiResponse = {
+        error: 'Primero debes "Crear Prenda" para obtener un ID válido.',
+      };
       this.cdr.detectChanges();
       return;
     }
-    this.executeRequest(this.clothesService.updateStatus(this.lastCreatedId, { status: 'processing' }));
+    this.executeRequest(
+      this.clothesService.updateStatus(this.lastCreatedId, { status: 'processing' })
+    );
   }
 
-  testUpdateClassification() {
+  testUpdateClassification(): void {
     if (!this.lastCreatedId) {
-      this.apiResponse = { error: 'Primero debes "Crear Prenda" para obtener un ID válido.' };
+      this.apiResponse = {
+        error: 'Primero debes "Crear Prenda" para obtener un ID válido.',
+      };
       this.cdr.detectChanges();
       return;
     }
-    // Simulate AI data
     const aiData = {
       name: 'Prueba',
       category: 'Tops',
@@ -221,12 +327,85 @@ export class InventoryDashboard implements OnInit {
       model_name: 'YOLOv8-Clothes',
       model_version: 'v1.2.0',
       status: 'completed',
-      processed_at: new Date().toISOString()
+      processed_at: new Date().toISOString(),
     };
-    this.executeRequest(this.clothesService.updateClassification(this.lastCreatedId, aiData));
+    this.executeRequest(
+      this.clothesService.updateClassification(this.lastCreatedId, aiData)
+    );
   }
 
-  private executeRequest(observable: any) {
+  private readUserFromToken(): void {
+    const storage =
+      typeof globalThis !== 'undefined' &&
+      'localStorage' in globalThis &&
+      globalThis.localStorage
+        ? globalThis.localStorage
+        : null;
+    if (!storage) {
+      this.setGreetingAndInitials('Usuario');
+      return;
+    }
+    const token = storage.getItem('token');
+    if (!token) {
+      this.setGreetingAndInitials('Usuario');
+      return;
+    }
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const decodedJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+      const p = JSON.parse(decodedJson) as Record<string, unknown>;
+      const nick =
+        (typeof p['nickname'] === 'string' && p['nickname']) ||
+        (typeof p['name'] === 'string' && p['name']) ||
+        (typeof p['given_name'] === 'string' && p['given_name']) ||
+        '';
+      const email = typeof p['email'] === 'string' ? p['email'] : '';
+      const local = email.includes('@') ? email.split('@')[0] : '';
+      const name = (nick || local || 'Usuario').trim();
+      this.setGreetingAndInitials(name || 'Usuario');
+    } catch {
+      this.setGreetingAndInitials('Usuario');
+    }
+  }
+
+  private setGreetingAndInitials(display: string): void {
+    this.userGreeting = display;
+    const parts = display.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      this.userInitials = (
+        parts[0][0] + parts[parts.length - 1][0]
+      ).toUpperCase();
+    } else if (parts.length === 1 && parts[0].length >= 2) {
+      this.userInitials = parts[0].slice(0, 2).toUpperCase();
+    } else if (parts.length === 1) {
+      this.userInitials = parts[0][0]?.toUpperCase() ?? 'U';
+    } else {
+      this.userInitials = 'U';
+    }
+  }
+
+  private updateActiveSectionFromScroll(): void {
+    const root = this.scrollArea?.nativeElement;
+    if (!root) return;
+
+    const rootRect = root.getBoundingClientRect();
+    const threshold = rootRect.top + this.headerOffsetPx;
+    let current = this.navItems[0].id;
+    for (const item of this.navItems) {
+      const el = document.getElementById(`section-${item.id}`);
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= threshold) {
+        current = item.id;
+      }
+    }
+    if (current !== this.activeSection) {
+      this.activeSection = current;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private executeRequest(observable: any): void {
     this.isLoading = true;
     this.apiResponse = null;
     this.cdr.detectChanges();
@@ -246,11 +425,11 @@ export class InventoryDashboard implements OnInit {
           status: err.status,
           statusText: err.statusText,
           message: err.message,
-          error_body: err.error
+          error_body: err.error,
         };
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 }
