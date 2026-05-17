@@ -53,3 +53,10 @@ export interface UpdateClassificationDTO {
   processing_error?: string;
   processed_at?: string;
 }
+
+/** Client-side shape for building multipart upload (not sent as JSON) */
+export interface UploadClothingPayload {
+  image: File;
+  garment_type: string;
+  name: string;
+}
