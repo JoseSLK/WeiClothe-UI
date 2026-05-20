@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { CreateClothingDTO, UpdateStatusDTO, UpdateClassificationDTO, ClothingItem } from '../interfaces/clothes.interface';
 
@@ -10,11 +11,45 @@ import { CreateClothingDTO, UpdateStatusDTO, UpdateClassificationDTO, ClothingIt
 export class ClothesService {
   private apiUrl = `${environment.apiUrl}wei/clothes`;
 
+  /** In-memory list for current user; avoids duplicate GET when carousel + armario share data */
+  private clothesCache: ClothingItem[] | null = null;
+  private clothesCacheUserId: string | null = null;
+
   constructor(private http: HttpClient) { }
+
+  /** Clears GET cache (e.g. after POST upload) */
+  invalidateClothesCache(): void {
+    this.clothesCache = null;
+    this.clothesCacheUserId = null;
+  }
+
+  /**
+   * Returns cached clothes for same user_id if available; otherwise GET and store.
+   */
+  getCachedClothes(userId: string): Observable<ClothingItem[]> {
+    if (this.clothesCacheUserId === userId && this.clothesCache !== null) {
+      return of([...this.clothesCache]);
+    }
+    return this.getUserClothes(userId);
+  }
+
+  /**
+   * multipart/form-data — do not set Content-Type manually (browser sets boundary).
+   */
+  uploadClothing(formData: FormData): Observable<ClothingItem> {
+    return this.http.post<ClothingItem>(this.apiUrl, formData);
+  }
 
   // Extract user id from token
   getUserIdFromToken(): string | null {
-    const token = localStorage.getItem('token');
+    if (
+      typeof globalThis === 'undefined' ||
+      !('localStorage' in globalThis) ||
+      !globalThis.localStorage
+    ) {
+      return null;
+    }
+    const token = globalThis.localStorage.getItem('token');
     if (!token) return null;
 
     try {
@@ -39,7 +74,12 @@ export class ClothesService {
   }
 
   getUserClothes(userId: string): Observable<ClothingItem[]> {
-    return this.http.get<ClothingItem[]>(`${this.apiUrl}?user_id=${userId}`);
+    return this.http.get<ClothingItem[]>(`${this.apiUrl}?user_id=${userId}`).pipe(
+      tap((items) => {
+        this.clothesCacheUserId = userId;
+        this.clothesCache = items;
+      })
+    );
   }
 
   getClothingById(id: string): Observable<ClothingItem> {
