@@ -8,8 +8,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   let modifiedReq = req;
-  
-  if (token) {
+
+  // Only attach Bearer to /clothes routes (users routes are public)
+  if (token && req.url.includes('/clothes')) {
     modifiedReq = req.clone({
       headers: req.headers.set('Authorization', `Bearer ${token}`)
     });
@@ -17,7 +18,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(modifiedReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
+      // Only handle 401 on clothes routes — users 401 is just bad credentials
+      if (error.status === 401 && req.url.includes('/clothes')) {
         console.warn('Interceptor: El token expiró o es inválido. Cerrando sesión de emergencia...');
         localStorage.removeItem('token');
         // Redirigimos forzosamente al login
