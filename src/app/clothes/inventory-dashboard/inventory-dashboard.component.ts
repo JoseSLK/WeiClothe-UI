@@ -9,7 +9,9 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClothesService } from '../services/clothes.service';
-import { CreateClothingDTO, ClothingItem } from '../interfaces/clothes.interface';
+import { RecommendationService } from '../services/recommendation.service';
+import { StylePreferencesService } from '../services/style-preferences.service';
+import { CreateClothingDTO, ClothingItem, OutfitRecommendation, UserStylePreferences, RecommendationParams } from '../interfaces/clothes.interface';
 
 @Component({
   selector: 'app-inventory-dashboard',
@@ -53,12 +55,42 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
   armarioFileInputKey = 0;
   armarioReloading = false;
 
+  /** Recomendaciones */
+  recoList: OutfitRecommendation[] = [];
+  recoLoading = false;
+  recoError = '';
+  recoSeason = '';
+  recoOccasion = '';
+  recoExpandedId: string | null = null;
+
+  /** Preferencias de estilo */
+  prefsLoading = false;
+  prefsSaving = false;
+  prefsError = '';
+  prefsSaved = false;
+  prefsNotFound = false;
+  prefsLoaded = false;
+  selectedColors: string[] = [];
+  avoidColors: string[] = [];
+  selectedSeasons: string[] = [];
+  selectedOccasions: string[] = [];
+  readonly COLOR_OPTIONS = ['red','blue','black','white','green','yellow','pink','orange','purple','brown','gray','beige','navy','multicolor'];
+  readonly SEASON_OPTIONS = ['summer','winter','spring','fall','all_season'];
+  readonly OCCASION_OPTIONS = ['casual','formal','sport','party','outdoor','beach'];
+
+  /** Modal detalle prenda */
+  detailItem: ClothingItem | null = null;
+  detailLoading = false;
+  detailOpen = false;
+
   /** Aligns with scroll-margin-top (~header + padding) */
   private headerOffsetPx = 68;
   private scrollSpyRaf = 0;
 
   constructor(
     private clothesService: ClothesService,
+    private recommendationService: RecommendationService,
+    private stylePreferencesService: StylePreferencesService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -110,6 +142,9 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     this.activeSection = id;
+    if (id === 'datos' && !this.prefsLoaded) {
+      this.loadPreferences();
+    }
     this.cdr.detectChanges();
   }
 
@@ -218,6 +253,156 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  // ─── Recomendaciones ─────────────────────────────────────────
+
+  loadRecommendations(): void {
+    const userId = this.clothesService.getUserIdFromToken();
+    if (!userId) return;
+
+    this.recoLoading = true;
+    this.recoError = '';
+    this.cdr.detectChanges();
+
+    const params: RecommendationParams = { user_id: userId };
+    if (this.recoSeason) params.season = this.recoSeason;
+    if (this.recoOccasion) params.occasion = this.recoOccasion;
+
+    this.recommendationService.getRecommendations(params).subscribe({
+      next: (recs) => {
+        this.recoList = recs;
+        this.recoLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading recommendations', err);
+        this.recoError = err?.error?.error || 'Error al cargar recomendaciones.';
+        this.recoLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  toggleRecoDetail(id: string): void {
+    this.recoExpandedId = this.recoExpandedId === id ? null : id;
+    this.cdr.detectChanges();
+  }
+
+  // ─── Preferencias de estilo ──────────────────────────────────
+
+  loadPreferences(): void {
+    const userId = this.clothesService.getUserIdFromToken();
+    if (!userId || this.prefsLoaded) return;
+
+    this.prefsLoading = true;
+    this.prefsError = '';
+    this.cdr.detectChanges();
+
+    this.stylePreferencesService.get(userId).subscribe({
+      next: (prefs) => {
+        this.selectedColors = prefs.preferred_colors || [];
+        this.avoidColors = prefs.avoid_colors || [];
+        this.selectedSeasons = prefs.preferred_seasons || [];
+        this.selectedOccasions = prefs.preferred_occasions || [];
+        this.prefsNotFound = false;
+        this.prefsLoading = false;
+        this.prefsLoaded = true;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        if (err.status === 404) {
+          this.prefsNotFound = true;
+        } else {
+          this.prefsError = err?.error?.error || 'Error al cargar preferencias.';
+        }
+        this.prefsLoading = false;
+        this.prefsLoaded = true;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  savePreferences(): void {
+    const userId = this.clothesService.getUserIdFromToken();
+    if (!userId || this.prefsSaving) return;
+
+    this.prefsSaving = true;
+    this.prefsSaved = false;
+    this.prefsError = '';
+    this.cdr.detectChanges();
+
+    const payload: Partial<UserStylePreferences> = {
+      preferred_colors: this.selectedColors,
+      avoid_colors: this.avoidColors,
+      preferred_seasons: this.selectedSeasons,
+      preferred_occasions: this.selectedOccasions,
+    };
+
+    this.stylePreferencesService.save(userId, payload).subscribe({
+      next: () => {
+        this.prefsSaving = false;
+        this.prefsSaved = true;
+        this.prefsNotFound = false;
+        this.prefsLoaded = true;
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.prefsSaved = false;
+          this.cdr.detectChanges();
+        }, 3000);
+      },
+      error: (err) => {
+        console.error('Error saving preferences', err);
+        this.prefsSaving = false;
+        this.prefsError = err?.error?.error || 'Error al guardar preferencias.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  toggleChip(list: string[], value: string): void {
+    const idx = list.indexOf(value);
+    if (idx >= 0) {
+      list.splice(idx, 1);
+    } else {
+      list.push(value);
+    }
+    this.prefsSaved = false;
+    this.cdr.detectChanges();
+  }
+
+  // ─── Modal detalle prenda ────────────────────────────────────
+
+  openGarmentDetail(id: string): void {
+    this.detailOpen = true;
+    this.detailLoading = true;
+    this.detailItem = null;
+    this.cdr.detectChanges();
+
+    this.clothesService.getClothingById(id).subscribe({
+      next: (item) => {
+        this.detailItem = item;
+        this.detailLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading garment detail', err);
+        this.detailLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  closeGarmentDetail(): void {
+    this.detailOpen = false;
+    this.detailItem = null;
+    this.cdr.detectChanges();
+  }
+
+  onModalOverlayClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('garment-modal-overlay')) {
+      this.closeGarmentDetail();
+    }
   }
 
   updateId(event: any): void {
@@ -401,6 +586,9 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
     }
     if (current !== this.activeSection) {
       this.activeSection = current;
+      if (current === 'datos' && !this.prefsLoaded) {
+        this.loadPreferences();
+      }
       this.cdr.detectChanges();
     }
   }

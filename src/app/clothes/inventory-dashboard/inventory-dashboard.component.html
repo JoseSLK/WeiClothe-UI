@@ -139,6 +139,8 @@
           *ngFor="let item of filteredArmarioClothes; trackBy: trackByClothingId"
           class="armario-gallery__item"
           role="listitem"
+          style="cursor:pointer"
+          (click)="openGarmentDetail(item.id)"
         >
           <img
             [src]="item.image_url || 'https://via.placeholder.com/150'"
@@ -154,39 +156,270 @@
 
     <div class="dash-divider" role="separator" aria-hidden="true"></div>
 
-    <!-- Recomendaciones (placeholder) -->
+    <!-- Recomendaciones -->
     <section id="section-recomendaciones" class="dash-section">
       <div class="dash-section__head">
         <h2 class="dash-section__title">Recomendaciones</h2>
-        <p class="dash-section__desc">Sugerencias basadas en tu armario.</p>
+        <p class="dash-section__desc">Sugerencias de outfits basadas en tu armario.</p>
       </div>
-      <div class="dash-placeholder" role="status">
+
+      <div class="reco-filters">
+        <div class="reco-filter-group">
+          <label class="field-label" for="reco-season">Temporada</label>
+          <select id="reco-season" class="dash-input dash-select" [(ngModel)]="recoSeason">
+            <option value="">Todas</option>
+            <option value="summer">Verano</option>
+            <option value="winter">Invierno</option>
+            <option value="spring">Primavera</option>
+            <option value="fall">Otoño</option>
+            <option value="all_season">Todo el año</option>
+          </select>
+        </div>
+        <div class="reco-filter-group">
+          <label class="field-label" for="reco-occasion">Ocasión</label>
+          <select id="reco-occasion" class="dash-input dash-select" [(ngModel)]="recoOccasion">
+            <option value="">Todas</option>
+            <option value="casual">Casual</option>
+            <option value="formal">Formal</option>
+            <option value="sport">Deporte</option>
+            <option value="party">Fiesta</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="beach">Playa</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          class="dash-btn dash-btn--primary reco-filters__btn"
+          [disabled]="recoLoading"
+          (click)="loadRecommendations()"
+        >
+          {{ recoLoading ? 'Buscando…' : 'Buscar outfits' }}
+        </button>
+      </div>
+
+      <div *ngIf="recoLoading" class="reco-loading" aria-live="polite">
+        <div class="dash-spinner"></div>
+        <p>Generando recomendaciones…</p>
+      </div>
+
+      <p *ngIf="recoError" class="field-error field-error--block">{{ recoError }}</p>
+
+      <div *ngIf="!recoLoading && recoList.length" class="reco-grid">
+        <article *ngFor="let rec of recoList" class="reco-card">
+          <div class="reco-card__images">
+            <figure class="reco-card__img-wrap">
+              <img [src]="rec.top.image_url" [alt]="rec.top.name || 'Top'" loading="lazy" />
+              <figcaption>Top</figcaption>
+            </figure>
+            <figure class="reco-card__img-wrap">
+              <img [src]="rec.bottom.image_url" [alt]="rec.bottom.name || 'Bottom'" loading="lazy" />
+              <figcaption>Bottom</figcaption>
+            </figure>
+            <figure class="reco-card__img-wrap">
+              <img [src]="rec.footwear.image_url" [alt]="rec.footwear.name || 'Calzado'" loading="lazy" />
+              <figcaption>Calzado</figcaption>
+            </figure>
+          </div>
+          <div class="reco-card__body">
+            <h3 class="reco-card__name">{{ rec.name }}</h3>
+            <div class="reco-card__score-row">
+              <span class="reco-card__score-label">Match</span>
+              <div class="reco-card__score-bar">
+                <div class="reco-card__score-fill" [style.width.%]="rec.score * 100"></div>
+              </div>
+              <span class="reco-card__score-value">{{ (rec.score * 100) | number:'1.0-0' }}%</span>
+            </div>
+            <p class="reco-card__desc">{{ rec.description }}</p>
+            <button
+              type="button"
+              class="reco-card__toggle"
+              (click)="toggleRecoDetail(rec.id)"
+              [attr.aria-expanded]="recoExpandedId === rec.id"
+            >
+              {{ recoExpandedId === rec.id ? 'Ocultar detalles' : 'Ver detalles' }}
+            </button>
+            <div *ngIf="recoExpandedId === rec.id" class="reco-card__reasoning armario-field-enter">
+              <p><strong>Armonía de color:</strong> {{ rec.reasoning.color_harmony }}</p>
+              <p><strong>Temporada:</strong> {{ rec.reasoning.season_match }}</p>
+              <p><strong>Ocasión:</strong> {{ rec.reasoning.occasion_match }}</p>
+              <p><strong>Patrón:</strong> {{ rec.reasoning.pattern_note }}</p>
+              <p *ngIf="rec.reasoning.material_note"><strong>Material:</strong> {{ rec.reasoning.material_note }}</p>
+              <p *ngIf="rec.reasoning.preference_note"><strong>Preferencias:</strong> {{ rec.reasoning.preference_note }}</p>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div *ngIf="!recoLoading && !recoError && !recoList.length" class="dash-placeholder" role="status">
         <svg class="dash-placeholder__icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M12 16v-4"></path>
-          <path d="M12 8h.01"></path>
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
         </svg>
-        <p class="dash-placeholder__text">Próximamente</p>
-        <p class="dash-placeholder__sub">Aquí verás recomendaciones cuando esté listo el motor.</p>
+        <p class="dash-placeholder__text">Sin recomendaciones aún</p>
+        <p class="dash-placeholder__sub">Necesitas al menos 1 prenda superior, 1 inferior y 1 calzado con estado «completado». Usa los filtros y pulsa «Buscar outfits».</p>
       </div>
     </section>
 
     <div class="dash-divider" role="separator" aria-hidden="true"></div>
 
-    <!-- Mis datos (placeholder) -->
+    <!-- Mis datos / Preferencias de estilo -->
     <section id="section-datos" class="dash-section dash-section--last">
       <div class="dash-section__head">
         <h2 class="dash-section__title">Mis datos</h2>
-        <p class="dash-section__desc">Perfil y preferencias.</p>
+        <p class="dash-section__desc">Configura tus preferencias de estilo para mejores recomendaciones.</p>
       </div>
-      <div class="dash-placeholder" role="status">
-        <svg class="dash-placeholder__icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-        <p class="dash-placeholder__text">Próximamente</p>
-        <p class="dash-placeholder__sub">Editar perfil y ajustes llegará en una siguiente iteración.</p>
+
+      <div *ngIf="prefsLoading" class="reco-loading" aria-live="polite">
+        <div class="dash-spinner"></div>
+        <p>Cargando preferencias…</p>
+      </div>
+
+      <p *ngIf="prefsNotFound && !prefsLoading" class="prefs-hint">
+        Aún no tienes preferencias guardadas. Selecciona tus gustos y guarda.
+      </p>
+
+      <div *ngIf="!prefsLoading" class="prefs-form">
+        <div class="prefs-group">
+          <label class="field-label">Colores preferidos</label>
+          <div class="chip-grid">
+            <button
+              *ngFor="let c of COLOR_OPTIONS"
+              type="button"
+              class="chip"
+              [class.chip--active]="selectedColors.includes(c)"
+              (click)="toggleChip(selectedColors, c)"
+            >
+              <span class="chip__dot" [style.background]="c === 'multicolor' ? 'linear-gradient(135deg,red,yellow,blue,green)' : c"></span>
+              {{ c }}
+            </button>
+          </div>
+        </div>
+
+        <div class="prefs-group">
+          <label class="field-label">Colores a evitar</label>
+          <div class="chip-grid">
+            <button
+              *ngFor="let c of COLOR_OPTIONS"
+              type="button"
+              class="chip chip--avoid"
+              [class.chip--active]="avoidColors.includes(c)"
+              (click)="toggleChip(avoidColors, c)"
+            >
+              <span class="chip__dot" [style.background]="c === 'multicolor' ? 'linear-gradient(135deg,red,yellow,blue,green)' : c"></span>
+              {{ c }}
+            </button>
+          </div>
+        </div>
+
+        <div class="prefs-group">
+          <label class="field-label">Temporadas preferidas</label>
+          <div class="chip-grid">
+            <button
+              *ngFor="let s of SEASON_OPTIONS"
+              type="button"
+              class="chip"
+              [class.chip--active]="selectedSeasons.includes(s)"
+              (click)="toggleChip(selectedSeasons, s)"
+            >
+              {{ s }}
+            </button>
+          </div>
+        </div>
+
+        <div class="prefs-group">
+          <label class="field-label">Ocasiones preferidas</label>
+          <div class="chip-grid">
+            <button
+              *ngFor="let o of OCCASION_OPTIONS"
+              type="button"
+              class="chip"
+              [class.chip--active]="selectedOccasions.includes(o)"
+              (click)="toggleChip(selectedOccasions, o)"
+            >
+              {{ o }}
+            </button>
+          </div>
+        </div>
+
+        <div class="prefs-actions">
+          <button
+            type="button"
+            class="dash-btn dash-btn--primary"
+            [disabled]="prefsSaving"
+            (click)="savePreferences()"
+          >
+            {{ prefsSaving ? 'Guardando…' : 'Guardar preferencias' }}
+          </button>
+          <p *ngIf="prefsSaved" class="prefs-saved armario-field-enter">✓ Preferencias guardadas</p>
+          <p *ngIf="prefsError" class="field-error">{{ prefsError }}</p>
+        </div>
       </div>
     </section>
   </main>
+
+  <!-- Modal detalle prenda -->
+  <div
+    *ngIf="detailOpen"
+    class="garment-modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Detalle de prenda"
+    (click)="onModalOverlayClick($event)"
+  >
+    <div class="garment-modal armario-field-enter">
+      <button type="button" class="garment-modal__close" (click)="closeGarmentDetail()" aria-label="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      <div *ngIf="detailLoading" class="reco-loading">
+        <div class="dash-spinner"></div>
+        <p>Cargando prenda…</p>
+      </div>
+
+      <ng-container *ngIf="detailItem && !detailLoading">
+        <img
+          class="garment-modal__image"
+          [src]="detailItem.image_url"
+          [alt]="detailItem.name || 'Prenda'"
+          loading="lazy"
+        />
+        <div class="garment-modal__info">
+          <h3 class="garment-modal__name">{{ detailItem.name || 'Sin nombre' }}</h3>
+          <span
+            class="garment-status-badge"
+            [class.garment-status-badge--queued]="detailItem.status === 'queued'"
+            [class.garment-status-badge--processing]="detailItem.status === 'processing'"
+            [class.garment-status-badge--completed]="detailItem.status === 'completed'"
+            [class.garment-status-badge--failed]="detailItem.status === 'failed'"
+          >
+            {{ detailItem.status }}
+          </span>
+          <div class="garment-meta">
+            <span class="garment-meta__label">Tipo</span>
+            <span class="garment-meta__value">{{ detailItem.garment_type || '—' }}</span>
+            <span class="garment-meta__label">Color</span>
+            <span class="garment-meta__value">{{ detailItem.color || '—' }}</span>
+            <span class="garment-meta__label">Patrón</span>
+            <span class="garment-meta__value">{{ detailItem.pattern || '—' }}</span>
+            <span class="garment-meta__label">Material</span>
+            <span class="garment-meta__value">{{ detailItem.material || '—' }}</span>
+            <span class="garment-meta__label">Temporada</span>
+            <span class="garment-meta__value">{{ detailItem.season || '—' }}</span>
+            <span class="garment-meta__label">Ocasión</span>
+            <span class="garment-meta__value">{{ detailItem.occasion || '—' }}</span>
+            <span class="garment-meta__label">Categoría</span>
+            <span class="garment-meta__value">{{ detailItem.category || '—' }}</span>
+            <span *ngIf="detailItem.confidence != null" class="garment-meta__label">Confianza</span>
+            <span *ngIf="detailItem.confidence != null" class="garment-meta__value">{{ detailItem.confidence! * 100 | number:'1.0-1' }}%</span>
+          </div>
+          <p *ngIf="detailItem.status === 'failed' && detailItem.processing_error" class="field-error">
+            {{ detailItem.processing_error }}
+          </p>
+          <p class="garment-modal__dates">
+            Creado: {{ detailItem.created_at }}<br/>
+            Actualizado: {{ detailItem.updated_at }}
+          </p>
+        </div>
+      </ng-container>
+    </div>
+  </div>
 </div>

@@ -497,3 +497,430 @@
     animation: none !important;
   }
 }
+
+/* ─── Shared spinner ─────────────────────────────────────────── */
+.dash-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: dash-spin 0.7s linear infinite;
+}
+
+/* ─── Recommendations ────────────────────────────────────────── */
+.reco-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.reco-filter-group {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.dash-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.25rem;
+  cursor: pointer;
+}
+
+.reco-filters__btn {
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+
+.reco-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.reco-loading p {
+  margin: 0;
+}
+
+.reco-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.reco-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.reco-card:hover {
+  border-color: #3c3c40;
+}
+
+.reco-card__images {
+  display: flex;
+  gap: 0;
+}
+
+.reco-card__img-wrap {
+  flex: 1;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.reco-card__img-wrap img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+}
+
+.reco-card__img-wrap figcaption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.3rem 0;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+}
+
+.reco-card__body {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reco-card__name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.reco-card__score-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reco-card__score-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.reco-card__score-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--input-bg);
+  overflow: hidden;
+}
+
+.reco-card__score-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #4ade80, #22d3ee);
+  transition: width 0.4s ease;
+}
+
+.reco-card__score-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  flex-shrink: 0;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.reco-card__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.reco-card__toggle {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0.35rem 0;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.reco-card__toggle:hover {
+  opacity: 0.75;
+}
+
+.reco-card__reasoning {
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.reco-card__reasoning p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.reco-card__reasoning strong {
+  color: var(--text-main);
+}
+
+/* ─── Preferences / Chips ────────────────────────────────────── */
+.prefs-hint {
+  margin: 0 0 1.25rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.prefs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.prefs-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.chip:hover {
+  border-color: #3c3c40;
+  color: var(--text-main);
+}
+
+.chip--active {
+  background: rgba(248, 248, 249, 0.12);
+  border-color: var(--primary-color);
+  color: var(--text-main);
+}
+
+.chip--avoid.chip--active {
+  background: rgba(255, 69, 58, 0.12);
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+.chip__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.prefs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.prefs-saved {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4ade80;
+}
+
+/* ─── Garment detail modal ───────────────────────────────────── */
+.garment-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  padding: 1.5rem;
+}
+
+.garment-modal {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.garment-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  z-index: 1;
+}
+
+.garment-modal__close:hover {
+  color: var(--text-main);
+  border-color: #3c3c40;
+}
+
+.garment-modal__image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--input-bg);
+}
+
+.garment-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.garment-modal__name {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.garment-status-badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--input-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.garment-status-badge--queued {
+  color: #8e8e93;
+}
+
+.garment-status-badge--processing {
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.3);
+  background: rgba(96, 165, 250, 0.1);
+  animation: badge-pulse 1.5s ease-in-out infinite;
+}
+
+.garment-status-badge--completed {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.garment-status-badge--failed {
+  color: var(--error-color);
+  border-color: rgba(255, 69, 58, 0.3);
+  background: rgba(255, 69, 58, 0.1);
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.garment-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 1rem;
+  font-size: 0.9rem;
+}
+
+.garment-meta__label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.garment-meta__value {
+  color: var(--text-main);
+  text-transform: capitalize;
+}
+
+.garment-modal__dates {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
