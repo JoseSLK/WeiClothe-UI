@@ -60,3 +60,42 @@ export interface UploadClothingPayload {
   garment_type: string;
   name: string;
 }
+
+/** Reasoning breakdown returned inside each OutfitRecommendation */
+export interface OutfitReasoning {
+  color_harmony: string;
+  season_match: string;
+  occasion_match: string;
+  pattern_note: string;
+  material_note?: string;
+  preference_note?: string;
+}
+
+/** Single outfit recommendation from GET /wei/clothes/recommendations */
+export interface OutfitRecommendation {
+  id: string;
+  name: string;
+  top: ClothingItem;
+  bottom: ClothingItem;
+  footwear: ClothingItem;
+  score: number;
+  reasoning: OutfitReasoning;
+  description: string;
+}
+
+/** Query params for GET /wei/clothes/recommendations */
+export interface RecommendationParams {
+  user_id: string;
+  season?: string;
+  occasion?: string;
+  limit?: number;
+}
+
+/** User style preferences from GET/PUT /wei/clothes/preferences */
+export interface UserStylePreferences {
+  user_id: string;
+  preferred_colors: string[];
+  preferred_occasions: string[];
+  preferred_seasons: string[];
+  avoid_colors: string[];
+}
