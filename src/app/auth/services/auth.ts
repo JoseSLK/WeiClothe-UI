@@ -33,6 +33,29 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  /** Decode JWT and return `sub` claim (= user id from Keycloak) */
+  getUserId(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const decoded = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+      const payload = JSON.parse(decoded);
+      return payload.sub || payload.user_id || payload.id || null;
+    } catch {
+      return null;
+    }
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+
+  /** Health check — GET /wei/users/ping → 202 { message: "pong" } */
+  pingUsers(): Observable<any> {
+    return this.http.get(`${this.goApiUrl}wei/users/ping`);
+  }
+
   logout(): void {
     localStorage.removeItem('token');
   }
