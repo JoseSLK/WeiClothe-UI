@@ -6,6 +6,7 @@ export const environment = {
     keycloakUrl: 'http://localhost:9090', //Keycloak-Python
     tenantName: 'WeiClothe',
     logoUrl: '/logo-weiclothe.png',
+    faviconUrl: '/wei.ico',
     theme: {
         '--bg-color': '#0f0f11',
         '--surface-color': '#1a1a1e',

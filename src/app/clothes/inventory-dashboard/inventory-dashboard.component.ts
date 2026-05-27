@@ -203,6 +203,7 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
       next: () => {
         this.armarioUploading = false;
         this.clothesService.invalidateClothesCache();
+        this.recommendationService.clearCache();
         this.armarioGarmentType = '';
         this.armarioGarmentName = '';
         this.armarioSelectedImage = null;

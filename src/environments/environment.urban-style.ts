@@ -6,6 +6,7 @@ export const environment = {
     keycloakUrl: 'http://localhost:9090',
     tenantName: 'Urban Style',
     logoUrl: '/logo-urban.png',
+    faviconUrl: '/urban.ico',
     theme: {
         '--bg-color': '#ffffff',
         '--surface-color': '#f5f5f5',
