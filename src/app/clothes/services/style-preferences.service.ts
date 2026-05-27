@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { UserStylePreferences } from '../interfaces/clothes.interface';
 
@@ -9,6 +10,7 @@ import { UserStylePreferences } from '../interfaces/clothes.interface';
 })
 export class StylePreferencesService {
   private apiUrl = `${environment.apiUrl}wei/clothes/preferences`;
+  private cache = new Map<string, UserStylePreferences>();
 
   constructor(private http: HttpClient) {}
 
@@ -19,7 +21,12 @@ export class StylePreferencesService {
    * 404 = no preferences yet — caller should guide user to save (PUT), not show error.
    */
   get(userId: string): Observable<UserStylePreferences> {
-    return this.http.get<UserStylePreferences>(`${this.apiUrl}?user_id=${userId}`);
+    if (this.cache.has(userId)) {
+      return of(this.cache.get(userId)!);
+    }
+    return this.http.get<UserStylePreferences>(`${this.apiUrl}?user_id=${userId}`).pipe(
+      tap(data => this.cache.set(userId, data))
+    );
   }
 
   /**
@@ -29,6 +36,8 @@ export class StylePreferencesService {
    * Returns saved UserStylePreferences.
    */
   save(userId: string, prefs: Partial<UserStylePreferences>): Observable<UserStylePreferences> {
-    return this.http.put<UserStylePreferences>(`${this.apiUrl}?user_id=${userId}`, prefs);
+    return this.http.put<UserStylePreferences>(`${this.apiUrl}?user_id=${userId}`, prefs).pipe(
+      tap(data => this.cache.set(userId, data))
+    );
   }
 }

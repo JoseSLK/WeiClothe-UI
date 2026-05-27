@@ -2,6 +2,7 @@ import { Component, Inject, PLATFORM_ID, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { environment } from '../environments/environment';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-root',
@@ -14,10 +15,26 @@ export class App {
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private titleService: Title
   ) {
     if (isPlatformBrowser(this.platformId)) {
       this.injectTheme();
+      this.setBranding();
+    }
+  }
+
+  private setBranding() {
+    this.titleService.setTitle(environment.tenantName);
+
+    if ((environment as any).faviconUrl) {
+      let link: HTMLLinkElement = this.document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = this.document.createElement('link');
+        link.rel = 'icon';
+        this.document.head.appendChild(link);
+      }
+      link.href = (environment as any).faviconUrl;
     }
   }
 
