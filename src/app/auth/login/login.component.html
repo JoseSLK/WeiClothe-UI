@@ -2,14 +2,15 @@
     <div class="login-wrapper">
         <div class="login-media">
             <div class="media-overlay">
-                <h2>WeiClothe</h2>
+                <img [src]="logoUrl" [alt]="tenantName" style="max-width: 150px; margin-bottom: 1rem;">
+                <h2>{{ tenantName }}</h2>
                 <p>Gestiona tu armario inteligentemente</p>
             </div>
         </div>
 
         <div class="login-form-container">
             <div class="login-header">
-                <h1 class="logo-mobile">WeiClothe</h1>
+                <h1 class="logo-mobile">{{ tenantName }}</h1>
                 <h2>Bienvenido de nuevo</h2>
                 <p class="subtitle">Ingresa tus credenciales para acceder</p>
             </div>

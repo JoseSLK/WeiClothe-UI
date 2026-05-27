@@ -2,14 +2,15 @@
   <div class="register-wrapper">
     <div class="register-media">
       <div class="media-overlay">
-        <h2>WeiClothe</h2>
-        <p>Únete a la revolución de la moda inteligente</p>
+        <img [src]="logoUrl" [alt]="tenantName" style="max-width: 150px; margin-bottom: 1rem;">
+        <h2>{{ tenantName }}</h2>
+        <p>Únete a la mejor forma de organizar tu estilo.</p>
       </div>
     </div>
 
     <div class="register-form-container">
       <div class="register-header">
-        <h1 class="logo-mobile">WeiClothe</h1>
+        <h1 class="logo-mobile">{{ tenantName }}</h1>
         <h2>Crea tu cuenta</h2>
         <p class="subtitle">Llena tus datos para comenzar</p>
       </div>

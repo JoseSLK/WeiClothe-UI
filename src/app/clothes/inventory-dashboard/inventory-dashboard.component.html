@@ -1,6 +1,8 @@
 <div class="dashboard">
   <header class="dash-header" role="banner">
-    <div class="dash-header__brand">WeiClothe</div>
+    <div class="dash-header__brand">
+       {{ tenantName }}
+    </div>
     <nav class="dash-header__nav" role="navigation" aria-label="Secciones">
       <button
         *ngFor="let item of navItems"

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-register',
@@ -11,6 +12,9 @@ import { AuthService } from '../services/auth';
   styleUrl: './register.component.css',
 })
 export class Register implements OnInit {
+  tenantName = environment.tenantName;
+  logoUrl = environment.logoUrl;
+
   user = {
     first_name: '',
     last_name: '',

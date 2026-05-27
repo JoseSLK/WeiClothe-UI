@@ -1,16 +1,6 @@
 :host {
   display: block;
-  font-family: 'Inter', sans-serif;
-  --bg-color: #0f0f11;
-  --surface-color: #1a1a1e;
-  --primary-color: #f8f8f9;
-  --primary-hover: #e2e2e4;
-  --text-main: #ffffff;
-  --text-muted: #8e8e93;
-  --border-color: #2c2c30;
-  --input-bg: #141416;
-  --error-color: #ff453a;
-  --error-bg: rgba(255, 69, 58, 0.1);
+  /* Variables are now injected globally via environment files */
 }
 
 .register-page {
@@ -25,8 +15,8 @@
 .register-wrapper {
   display: flex;
   width: 100%;
-  max-width: 1100px;
-  min-height: 700px;
+  max-width: 950px;
+  min-height: 600px;
   background-color: var(--surface-color);
   border-radius: 24px;
   overflow: hidden;
@@ -54,6 +44,10 @@
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
   padding: 4rem 3rem;
   color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .media-overlay h2 {
@@ -64,9 +58,13 @@
 }
 
 .media-overlay p {
-  font-size: 1.1rem;
-  opacity: 0.8;
+  font-size: 0.85rem;
+  opacity: 0.85;
   margin: 0;
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
 .register-form-container {
@@ -82,7 +80,7 @@
 
 @media (min-width: 1024px) {
   .register-form-container {
-    padding: 3rem 4rem;
+    padding: 2.5rem 3rem;
   }
 }
 
