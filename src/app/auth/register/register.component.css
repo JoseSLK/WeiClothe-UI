@@ -158,9 +158,9 @@
   gap: 0.25rem 1rem;
 }
 
-.form-grid + .input-group,
-.input-group + .form-grid,
-.form-grid + .form-grid {
+.form-grid+.input-group,
+.input-group+.form-grid,
+.form-grid+.form-grid {
   margin-top: 0.35rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border-color);
