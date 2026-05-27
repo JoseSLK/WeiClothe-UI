@@ -4,6 +4,8 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { CommonModule } from '@angular/common';
 
+import { environment } from '../../../environments/environment';
+
 @Component({
   selector: 'app-login',
   imports: [FormsModule, CommonModule, RouterModule],
@@ -11,6 +13,9 @@ import { CommonModule } from '@angular/common';
   styleUrl: './login.component.css',
 })
 export class Login {
+  tenantName = environment.tenantName;
+  logoUrl = environment.logoUrl;
+  
   email = '';
   password = '';
 

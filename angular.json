@@ -49,6 +49,28 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "urban-style": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.urban-style.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
+            "boutique-karen": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.boutique-karen.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
@@ -61,6 +83,12 @@
             },
             "development": {
               "buildTarget": "weicloth:build:development"
+            },
+            "urban-style": {
+              "buildTarget": "weicloth:build:urban-style"
+            },
+            "boutique-karen": {
+              "buildTarget": "weicloth:build:boutique-karen"
             }
           },
           "defaultConfiguration": "development"

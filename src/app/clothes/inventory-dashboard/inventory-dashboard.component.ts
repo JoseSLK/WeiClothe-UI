@@ -13,6 +13,8 @@ import { RecommendationService } from '../services/recommendation.service';
 import { StylePreferencesService } from '../services/style-preferences.service';
 import { CreateClothingDTO, ClothingItem, OutfitRecommendation, UserStylePreferences, RecommendationParams } from '../interfaces/clothes.interface';
 
+import { environment } from '../../../environments/environment';
+
 @Component({
   selector: 'app-inventory-dashboard',
   standalone: true,
@@ -22,6 +24,9 @@ import { CreateClothingDTO, ClothingItem, OutfitRecommendation, UserStylePrefere
 })
 export class InventoryDashboard implements OnInit, AfterViewInit {
   @ViewChild('scrollArea', { static: false }) scrollArea?: ElementRef<HTMLElement>;
+
+  tenantName = environment.tenantName;
+  logoUrl = environment.logoUrl;
 
   apiResponse: any = null;
   isLoading: boolean = false;
