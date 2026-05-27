@@ -5,12 +5,15 @@ import {
   AfterViewInit,
   ViewChild,
   ElementRef,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ClothesService } from '../services/clothes.service';
 import { RecommendationService } from '../services/recommendation.service';
 import { StylePreferencesService } from '../services/style-preferences.service';
+import { AuthService } from '../../auth/services/auth';
 import { CreateClothingDTO, ClothingItem, OutfitRecommendation, UserStylePreferences, RecommendationParams } from '../interfaces/clothes.interface';
 
 import { environment } from '../../../environments/environment';
@@ -45,6 +48,7 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
 
   userGreeting = 'Usuario';
   userInitials = 'U';
+  userEmail = '';
 
   /** Armario — search (name / color) */
   armarioSearchQuery = '';
@@ -88,6 +92,9 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
   detailLoading = false;
   detailOpen = false;
 
+  /** Avatar dropdown menu */
+  avatarMenuOpen = false;
+
   /** Aligns with scroll-margin-top (~header + padding) */
   private headerOffsetPx = 68;
   private scrollSpyRaf = 0;
@@ -96,6 +103,8 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
     private clothesService: ClothesService,
     private recommendationService: RecommendationService,
     private stylePreferencesService: StylePreferencesService,
+    private authService: AuthService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -411,6 +420,28 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
     }
   }
 
+  // ─── Avatar menu & logout ───────────────────────────────────
+
+  toggleAvatarMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.avatarMenuOpen = !this.avatarMenuOpen;
+    this.cdr.detectChanges();
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.avatarMenuOpen) {
+      this.avatarMenuOpen = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  logout(): void {
+    this.avatarMenuOpen = false;
+    this.authService.logout();
+    this.router.navigate(['/']);
+  }
+
   updateId(event: any): void {
     this.lastCreatedId = event.target.value;
     this.cdr.detectChanges();
@@ -553,14 +584,15 @@ export class InventoryDashboard implements OnInit, AfterViewInit {
       const email = typeof p['email'] === 'string' ? p['email'] : '';
       const local = email.includes('@') ? email.split('@')[0] : '';
       const name = (nick || local || 'Usuario').trim();
-      this.setGreetingAndInitials(name || 'Usuario');
+      this.setGreetingAndInitials(name || 'Usuario', email);
     } catch {
-      this.setGreetingAndInitials('Usuario');
+      this.setGreetingAndInitials('Usuario', '');
     }
   }
 
-  private setGreetingAndInitials(display: string): void {
+  private setGreetingAndInitials(display: string, email: string = ''): void {
     this.userGreeting = display;
+    this.userEmail = email;
     const parts = display.trim().split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {
       this.userInitials = (
